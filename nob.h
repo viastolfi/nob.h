@@ -485,7 +485,7 @@ int nob_needs_rebuild1(const char *output_path, const char *input_path);
 int nob_file_exists(const char *file_path);
 const char *nob_get_current_dir_temp(void);
 bool nob_set_current_dir(const char *path);
-bool nob_find_source_in_dir_recursively(const char *path, Nob_String_Builder *sb);
+bool nob_find_source_in_dir_recursively(Nob_Cmd *cmd, const char *path);
 
 // TODO: we should probably document somewhere all the compiler we support
 
@@ -1793,25 +1793,28 @@ bool nob_set_current_dir(const char *path)
 #endif // _WIN32
 }
 
-bool nob_find_source_in_dir_recursively(const char *path, Nob_String_Builder *sb)
+bool nob_find_source_in_dir_recursively(Nob_Cmd *cmd, const char *path)
 {
     Nob_File_Paths children = {0};
     
-    if (!nob_read_entire_dir(path, &children)) return;
+    if (!nob_read_entire_dir(path, &children)) {
+        nob_log(NOB_ERROR, "could not read dir %s : %s", path, strerror(errno));
+        return false;
+    }
     
     for (size_t i = 0; i < children.count; ++i) {
         if (*children.items[i] != '.') {
             Nob_String_Builder full_path = {0};
             if (nob_sv_end_with(nob_sv_from_cstr(children.items[i]), ".c")) {
                 nob_sb_appendf(&full_path, "%s%s", path, children.items[i]);
-                nob_sb_append_cstr(cmd, full_path.items);
+                nob_cmd_append(cmd, full_path.items);
             } else {
                 nob_sb_appendf(&full_path, "%s%s/", path, children.items[i]);
-                if(nob_is_dir(full_path))
-                    nob_find_source_in_dir_recursively(full_path, sb);
+                Nob_File_Type type = nob_get_file_type(full_path.items);
+                if(type == NOB_FILE_DIRECTORY)
+                    nob_find_source_in_dir_recursively(cmd, full_path.items);
                 else {
-                    nob_log(NOB_ERROR, "could not get file %s type : %s", full_path, strerror(errno)); 
-                    return false;
+                    continue;
                 }
             }
         }
@@ -2138,3 +2141,4 @@ int closedir(DIR *dirp)
    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    ------------------------------------------------------------------------------
 */
+
