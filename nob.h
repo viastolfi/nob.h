@@ -485,6 +485,7 @@ int nob_needs_rebuild1(const char *output_path, const char *input_path);
 int nob_file_exists(const char *file_path);
 const char *nob_get_current_dir_temp(void);
 bool nob_set_current_dir(const char *path);
+bool nob_find_source_in_dir_recursively(const char *path, Nob_String_Builder *sb);
 
 // TODO: we should probably document somewhere all the compiler we support
 
@@ -1790,6 +1791,33 @@ bool nob_set_current_dir(const char *path)
     }
     return true;
 #endif // _WIN32
+}
+
+bool nob_find_source_in_dir_recursively(const char *path, Nob_String_Builder *sb)
+{
+    Nob_File_Paths children = {0};
+    
+    if (!nob_read_entire_dir(path, &children)) return;
+    
+    for (size_t i = 0; i < children.count; ++i) {
+        if (*children.items[i] != '.') {
+            Nob_String_Builder full_path = {0};
+            if (nob_sv_end_with(nob_sv_from_cstr(children.items[i]), ".c")) {
+                nob_sb_appendf(&full_path, "%s%s", path, children.items[i]);
+                nob_sb_append_cstr(cmd, full_path.items);
+            } else {
+                nob_sb_appendf(&full_path, "%s%s/", path, children.items[i]);
+                if(nob_is_dir(full_path))
+                    nob_find_source_in_dir_recursively(full_path, sb);
+                else {
+                    nob_log(NOB_ERROR, "could not get file %s type : %s", full_path, strerror(errno)); 
+                    return false;
+                }
+            }
+        }
+    }
+
+    return true;
 }
 
 // minirent.h SOURCE BEGIN ////////////////////////////////////////
