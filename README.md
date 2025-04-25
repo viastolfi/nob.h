@@ -1,3 +1,51 @@
+> [!WARNING]
+> This is a fork from [https://github.com/tsoding/nob.h](https://github.com/tsoding/nob.h)
+> I made some changes to it so it feats my need 
+> I may or may not have break anything else
+> Prefer using the main lib to avoid unplanned behavior
+
+### Changes I've done 
+
+add the `nob_find_source_in_dir_recursively(Nob_Cmd *cmd, const char* path)` function to add all your source files to your cmd from a specific dir.
+
+### Example
+
+```
+src
+|
+|- main.c
+|- foo.c
+- bar/
+  |
+  |- bar.c
+```
+
+Using the `nob_find_source_in_dir_recursively` funtion, you can add directly all .c files to your cmd using it like that
+
+```c
+int main(int argc, char** argv)
+{
+    NOB_GO_REBUILD_URSELF(argc, argv);
+
+    if (!nob_mkdir_if_not_exists("build/")) return 1;
+
+    Nob_Cmd cmd = {0};
+
+    nob_cmd_append(&cmd, "gcc", "-Wall", "-Wextra", "-g", "-o", "build/example");
+
+    Nob_String_Builder sources = {0};
+    if(!nob_find_source_in_dir_recursively(&cmd, "src/"))
+    {
+        nob_log(NOB_ERROR, "could not nob_find_source_in_dir_recursively with %s", "src/");
+        return 1;
+    }
+    
+    if (!nob_cmd_run_sync_and_reset(&cmd)) return 1;
+
+    return 0;
+}
+```
+
 # nob.h - Next generation of the NoBuild
 
 This library is the next generation of the NoBuild idea. "nob" stands for "nobuild", but it's shorter and more suitable as a prefix for a library.
