@@ -1,8 +1,8 @@
 > [!WARNING]
 > This is a fork from [https://github.com/tsoding/nob.h](https://github.com/tsoding/nob.h)
-> I made some changes to it so it feats my need 
-> I may or may not have break anything else
-> Prefer using the main lib to avoid unplanned behavior
+> I made some changes to it so it feats my need. 
+> I may or may not have break anything else.
+> Prefer using the main lib to avoid unplanned behavior.
 
 ### Changes I've done 
 
